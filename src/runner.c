@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <csptr/smart_ptr.h>
 #include "criterion/assert.h"
 #include "stats.h"
@@ -98,8 +99,13 @@ static void run_test_child(struct criterion_test *test) {
     send_event(PRE_INIT, NULL, 0);
     (test->data->init ?: nothing)();
     send_event(PRE_TEST, NULL, 0);
+
+    clock_t before = clock();
     (test->test       ?: nothing)();
-    send_event(POST_TEST, NULL, 0);
+    clock_t after = clock();
+
+    float elapsed_time = (float) (after - before) / CLOCKS_PER_SEC;
+    send_event(POST_TEST, &elapsed_time, sizeof (float));
     (test->data->fini ?: nothing)();
     send_event(POST_FINI, NULL, 0);
 }
@@ -150,11 +156,12 @@ static void run_test(struct criterion_global_stats *stats, struct criterion_test
                 stat_push_event(stats, test_stats, &ev);
                 report(TEST_CRASH, test_stats);
             } else {
-                struct event ev = { .kind = POST_TEST };
+                float elapsed_time = 0;
+                struct event ev = { .kind = POST_TEST, .data = &elapsed_time };
                 stat_push_event(stats, test_stats, &ev);
                 report(POST_TEST, test_stats);
 
-                ev.kind = POST_FINI;
+                ev = (struct event) { .kind = POST_FINI };
                 stat_push_event(stats, test_stats, &ev);
                 report(POST_FINI, test_stats);
             }

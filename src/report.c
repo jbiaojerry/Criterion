@@ -53,7 +53,7 @@ ReportHook(PRE_INIT)(struct criterion_test *test) {
 }
 
 ReportHook(POST_TEST)(struct criterion_test_stats *stats) {
-    fprintf(stderr, "%s::%s: %s\n", stats->test->category, stats->test->name, stats->failed ? "FAILURE" : "SUCCESS");
+    fprintf(stderr, "%s::%s: %s (%3.2fs)\n", stats->test->category, stats->test->name, stats->failed ? "FAILURE" : "SUCCESS", stats->elapsed_time);
 }
 
 ReportHook(PRE_TEST)() {}
@@ -61,7 +61,8 @@ ReportHook(POST_FINI)() {}
 
 ReportHook(PRE_EVERYTHING)() {}
 ReportHook(POST_EVERYTHING)(struct criterion_global_stats *stats) {
-    fprintf(stderr, "Synthesis: %lu tests were run. %lu passed, %lu failed (with %lu crashes)\n", stats->nb_tests, stats->tests_passed, stats->tests_failed, stats->tests_crashed);
+    fprintf(stderr, "Synthesis: %lu tests were run. %lu passed, %lu failed (with %lu crashes)\n",
+            stats->nb_tests, stats->tests_passed, stats->tests_failed, stats->tests_crashed);
 }
 
 ReportHook(ASSERT)(struct criterion_assert_stats *stats) {
